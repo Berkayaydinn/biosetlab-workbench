@@ -1,181 +1,232 @@
-<div align="center">
+# Web-based Secure Health Data Sharing Platform Among Medical Professionals and Researchers 
 
-# BioSetLab Workbench
+## Table of Contents
+1. [Introduction](#introduction)
+2. [System Architecture](#system-architecture)
+3. [Development Setup](#development-setup)
+    - [Installing Node.js and npm](#installing-nodejs-and-npm)
+    - [Backend Setup](#backend-setup)
+    - [Frontend Setup](#frontend-setup)
+    - [Playground Service Setup](#playground-service-setup)
+4. [Running the Application](#running-the-application)
+    - [Docker & Docker Compose Setup](#docker--docker-compose-setup)
+    - [Nginx Reverse Proxy](#nginx-reverse-proxy)
+    - [Running Up Application](#running-the-application)
+    - [Running Up Application](#stop-services)
+7. [Contributing](#contributing)
+8. [License](#license)
 
-### LLM-Augmented Collaborative No-Code Platform for Biomedical Data Analysis
+## Introduction
+Our project introduces a secure web-based platform for sharing healthcare projects and anonymized data, enabling seamless collaboration among clinicians and researchers. This innovative tool leverages advanced technologies to enhance healthcare innovation and improve patient outcomes.​
 
-BioSetLab Workbench is a research platform that explores how Large Language Models can assist biomedical researchers in designing, executing, and sharing reproducible analysis workflows through natural language interaction and visual workflow composition.
+This project is a web application comprising a Node.js backend using Express.js and a React.js frontend using Tailwind CSS. The backend and frontend services are containerized using Docker, and the application is orchestrated using Docker Compose. This README will guide you through setting up the development environment and running the application on a local machine.
 
-![Status](https://img.shields.io/badge/Status-Active-success)
-![Research](https://img.shields.io/badge/Research-In%20Progress-blue)
-![Version](https://img.shields.io/badge/Version-v0.1.0-informational)
+## System Architecture
 
-</div>
+![System Architecture](./system_diagram.jpg)
 
----
+The system architecture includes the following components:
+- **Frontend Container**: Serves the React application created with Vite.
+- **Backend Containers**: Instances of the Node.js Express API
+- **Nginx Reverse Proxy Container**: Acts as a reverse proxy to route traffic to the frontend and backend services.
+- **MongoDB Atlas**: Cloud-based database service.
 
-## Overview
+## Development Setup
 
-Biomedical researchers often face significant barriers when applying computational analysis methods due to the complexity of existing tools and the requirement for programming expertise.
+We wrote our project using only JavaScript language, therefore, in order to develop backend or frontend of our project, first you need to install node.js and npm to your machine.
 
-BioSetLab Workbench aims to bridge this gap by providing an AI-assisted no-code environment where users can construct biomedical analysis workflows using natural language and an interactive visual interface.
+### Installing Node.js and npm
 
-The platform combines workflow automation, explainable AI, collaborative editing, and reproducible research principles into a unified system designed for both research and education.
+Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine, and npm is the package manager for Node.js.
 
----
+#### Windows
 
-## Research Goals
+1. **Download the Node.js Installer**:
+   Go to the [Node.js download page](https://nodejs.org/en/download/) and download the Windows installer.
 
-The primary objectives of BioSetLab Workbench are:
+2. **Run the Installer**:
+   Run the downloaded `.msi` file and follow the installation instructions. Make sure to check the box that says "Automatically install the necessary tools" to install `npm` as well.
 
-- Enable natural language-driven workflow generation using Large Language Models.
-- Recommend appropriate analysis nodes based on user intent and workflow context.
-- Improve workflow transparency through explainable AI techniques.
-- Support collaborative biomedical research with role-based access control.
-- Evaluate the effectiveness of AI-assisted workflow construction through user studies and experimental analysis.
+3. **Verify Installation**:
+   Open a command prompt and type:
+   ```sh
+   node -v
+   npm -v
+   ```
+   You should see the version numbers of Node.js and npm.
 
----
+#### Linux
 
-## Core Features
+1. **Update your package index**:
+   ```sh
+   sudo apt update
+   ```
 
-| Feature | Status |
-|----------|:------:|
-| Natural Language Workflow Generation | 🚧 |
-| AI-Assisted Node Recommendation | 🚧 |
-| Explainable Workflow Generation | 🚧 |
-| Visual Workflow Builder | ✅ |
-| Workflow Execution | ✅ |
-| Real-Time Collaboration | 🚧 |
-| Role-Based Access Control (RBAC) | 🚧 |
-| Workflow Sharing | 🚧 |
-| Experimental Evaluation Framework | 🚧 |
+2. **Install Node.js and npm**:
+   ```sh
+   sudo apt install nodejs npm
+   ```
 
----
+3. **Verify Installation**:
+   ```sh
+   node -v
+   npm -v
+   ```
 
-## Repository Structure
 
-```text
-biosetlab-workbench
-│
-├── frontend/            # User Interface
-├── backend/             # REST API and application services
-├── ai-services/         # LLM integration and AI modules
-├── shared/              # Shared utilities and common packages
-├── docs/                # Documentation
-├── evaluation/          # User studies and experimental evaluation
-├── paper/               # Research paper materials
-├── deployment/          # Docker and deployment configuration
-├── scripts/             # Development scripts
-└── tests/               # Automated tests
-```
+### Backend Setup
 
----
+1. **Navigate to the Backend Directory**:
+    ```sh
+    cd backend
+    ```
 
-## Technology Stack
+2. **Install Dependencies**:
+    ```sh
+    npm update
+    ```
 
-| Layer | Technologies |
-|--------|--------------|
-| Frontend | React, TypeScript, Vite |
-| Backend | Node.js, Express |
-| AI Services | Python, FastAPI |
-| Database | MongoDB |
-| Containerization | Docker, Docker Compose |
-| Version Control | Git & GitHub |
+3. **Run the Backend Server**:
+    ```sh
+    node app.js
+    ```
 
----
+### Frontend Setup
 
-## Research Roadmap
+1. **Navigate to the Frontend Directory**:
+    ```sh
+    cd frontend
+    ```
 
-### Phase 1 — Platform Foundation
+2. **Install Dependencies**:
+    ```sh
+    npm install
+    ```
 
-- Project architecture
-- Repository restructuring
-- Development environment
-- Core workflow engine
+3. **Run the Frontend Server**:
+    ```sh
+    npm run dev
+    ```
 
-### Phase 2 — AI-Augmented Workflow Generation
 
-- Natural language interface
-- Workflow generation using LLMs
-- Prompt engineering
-- Workflow validation
+### Playground Service Setup
 
-### Phase 3 — Intelligent Assistance
+1. **Navigate to the Playground Directory**:
+    ```sh
+    cd playground
+    ```
+2. **Create a Virtual Environment if not already created**:
+    ```sh
+    python3 -m venv venv
+    ```
+3. **Activate the Virtual Environment**:
+    a. **For Windows**:
+    ```sh
+    venv\Scripts\activate
+    ```
+    b. **For Linux**:
+    ```sh
+    source venv/bin/activate
+    ```
+3. **Install Dependencies**:
+    ```sh
+    pip install -r requirements.txt
+    ```
+4. **Set Environment Variables**:
+    a. Add the following environment variables to the `.env` file:
+    ```
+    SECRET_KEY=your_secret_key
+    DEBUG=True
+    MONGO_URI=your_mongo_uri
+    ```
+6. **Run the Playground Service**:
+    ```sh
+    python -m uvicorn app.main:app --reload --host localhost --port 3000
+    ```
+7. **Access the Playground Service**:
+    Open a web browser and navigate to `http://localhost:3000/docs` to access the Swagger documentation.
 
-- Node recommendation
-- Workflow explanation
-- Context-aware suggestions
-- Error detection
 
-### Phase 4 — Collaboration
+## Running the Application
 
-- User authentication
-- Role-based permissions
-- Collaborative workflow editing
-- Workflow sharing
+### Docker & Docker Compose Setup
 
-### Phase 5 — Experimental Evaluation
+Ensure you have Docker and Docker Compose installed on your machine. You can download Docker from [here](https://www.docker.com/products/docker-desktop), and Docker Compose from [here](https://docs.docker.com/compose/install/).
 
-- User studies
-- Quantitative evaluation
-- Qualitative analysis
-- Statistical validation
+#### Verify Installation:
 
-### Phase 6 — Publication
+**For Windows**:
 
-- Experimental results
-- Paper preparation
-- Reproducibility package
-- Open-source release
+    docker --version
+    docker-compose --version
+    
 
----
+**For Linux**:
+   ```sh
+   sudo docker --version
+   ```
+   ```sh
+   docker compose --version
+   ```
+You should see the version numbers of Docker and Docker Compose.
 
-## Research Focus
+### Nginx Reverse Proxy
 
-Current research directions include:
+The Nginx reverse proxy configuration (default.conf file) is located in the `nginx` directory in the main project directory. This configuration routes traffic to the appropriate frontend and backend services.
 
-- Large Language Models for scientific workflow generation
-- Human-AI collaboration
-- Explainable AI
-- Biomedical data analysis
-- Visual programming environments
-- Reproducible research
-- Collaborative computational science
 
----
+### **Navigate to the Main Project Directory**:
+    
+    cd path/to/main_project_directory
 
-## Current Development Status
+### **Build and Run the Containers**:
+    
+**For Linux:**
 
-BioSetLab Workbench is currently under active development as part of an ongoing research project.
+    sudo docker compose build --no-cache
+    sudo docker compose up
 
-The initial development phase focuses on establishing the core architecture, followed by AI-assisted workflow generation, collaborative capabilities, and comprehensive experimental evaluation.
+**For Windows:**
 
----
+    docker-compose up
 
-## Publications
 
-This repository accompanies an ongoing research project.
+This command will build the Docker images and start the containers as defined in the `docker-compose.yml` file. The application will be accessible at `http://localhost:8000`.
 
-Associated publications and supplementary materials will be added upon publication.
+### **Stop Services**:
+**For Linux:**
 
----
+    sudo docker compose down
+
+**For Windows:**
+
+    docker-compose down
+
+
+<!-- ## Environment Variables
+
+Ensure to set the following environment variables for both backend and frontend:
+
+### Backend Environment Variables
+- `PORT`: Port number for the backend server (e.g., 3838, 3939)
+- `MONGO_URI`: MongoDB Atlas connection string
+- `JWT_SECRET`: Secret key for JWT authentication
+- `EMAIL_SERVICE`: Email service provider (e.g., SMTP)
+- `EMAIL_USER`: Email service user
+- `EMAIL_PASS`: Email service password -->
+
+<!-- ### Frontend Environment Variables
+- `REACT_APP_API_URL`: URL of the backend API (e.g., `http://localhost:8000/api`) -->
 
 ## Contributing
 
-The repository is currently maintained by the BioSetLab research team.
-
-Contribution guidelines will be published after the initial development phase.
-
----
-
-## Citation
-
-If you use BioSetLab Workbench in your research, citation information will be provided after the associated publication becomes available.
-
----
+We welcome contributions to improve this project. Please follow the standard Git workflow:
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to your fork
+5. Create a pull request
 
 ## License
 
-This repository is currently private.
-
-© BioSetLab Research Group
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
