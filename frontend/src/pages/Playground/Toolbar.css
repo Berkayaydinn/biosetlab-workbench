@@ -1,0 +1,36 @@
+.playground-container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .toolbar {
+    width: 80px;
+    background-color: #f4f4f4;
+    border-right: 1px solid #ddd;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .search-input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+  }
+  
+  .toolbar-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .toolbar-item {
+    font-size: 24px;
+    margin: 10px 0;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  

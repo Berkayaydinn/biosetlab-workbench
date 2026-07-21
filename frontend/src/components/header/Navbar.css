@@ -1,0 +1,22 @@
+.rainbow-text {
+    background: linear-gradient(to right, red, orange, yellow, green, cyan, blue, violet);
+    -webkit-background-clip: text; /* Clipping the background to the text for WebKit browsers */
+    -moz-background-clip: text; /* Clipping the background to the text for Mozilla Firefox */
+    color: transparent !important; /* Making the text transparent to show the background */
+    animation: rainbow 5s infinite linear; /* Smoother, continuous gradient animation */
+    background-size: 200% auto; /* Enlarges the background gradient for a smoother transition */
+  }
+  
+  @keyframes rainbow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .nav-link:hover {
+    color: white;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8),
+                 0 0 12px rgba(255, 255, 255, 0.6);
+    transition: text-shadow 0.3s ease-in-out;
+  }
+  
