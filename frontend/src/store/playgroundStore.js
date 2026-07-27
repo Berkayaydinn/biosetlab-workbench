@@ -157,6 +157,290 @@ export const usePlaygroundStore = create((set, get) => ({
         }
     },
 
+
+    loadAIWorkflow: (workflow) => {
+        if (!workflow || !Array.isArray(workflow.nodes) || !Array.isArray(workflow.edges)) {
+            throw new Error("The backend returned an invalid workflow.");
+        }
+
+        const inferNodeType = (node) => {
+            if (node.type && NodeConfig[node.type]) {
+                return node.type;
+            }
+
+            const label = String(
+                node?.data?.label ||
+                node?.data?.name ||
+                node?.label ||
+                ""
+            ).toLowerCase();
+
+            if (
+                label.includes("dataset") ||
+                label.includes("load data") ||
+                label.includes("upload")
+            ) {
+                return "node-data-file";
+            }
+
+            if (
+                label.includes("preprocess") ||
+                label.includes("clean") ||
+                label.includes("impute") ||
+                label.includes("missing")
+            ) {
+                return "node-transform-impute";
+            }
+
+            if (
+                label.includes("split") ||
+                label.includes("train test")
+            ) {
+                return "node-data-train-test-split";
+            }
+
+            if (
+                label.includes("classifier") ||
+                label.includes("classification") ||
+                label.includes("random forest") ||
+                label.includes("train model")
+            ) {
+                return "node-prediction-random-forest";
+            }
+
+            if (
+                label.includes("evaluate") ||
+                label.includes("evaluation") ||
+                label.includes("test and score")
+            ) {
+                return "node-evaluation-test-and-score";
+            }
+
+            if (label.includes("pca")) {
+                return "node-unsupervised-pca";
+            }
+
+            if (
+                label.includes("cluster") ||
+                label.includes("k-means") ||
+                label.includes("kmeans")
+            ) {
+                return "node-unsupervised-kmeans";
+            }
+
+            if (
+                label.includes("heatmap") ||
+                label.includes("volcano")
+            ) {
+                return "node-visualization-heatmap";
+            }
+
+            if (
+                label.includes("plot") ||
+                label.includes("chart") ||
+                label.includes("visual")
+            ) {
+                return "node-visualization-scatter-plot";
+            }
+
+            if (
+                label.includes("statistics") ||
+                label.includes("summary")
+            ) {
+                return "node-data-feature-statistics";
+            }
+
+            return "node-data-feature-statistics";
+        };
+
+        const cloneParameters = (parameters) => {
+            try {
+                return JSON.parse(JSON.stringify(parameters || {}));
+            } catch {
+                return {};
+            }
+        };
+
+        const normalizedNodes = workflow.nodes.map((node, index) => {
+            const type = inferNodeType(node);
+            const config = NodeConfig[type];
+
+            return {
+                id: String(node.id || `${type}-${uuidv4()}`),
+                type,
+                position: {
+                    x: Number.isFinite(node?.position?.x)
+                        ? node.position.x
+                        : 120 + index * 280,
+                    y: Number.isFinite(node?.position?.y)
+                        ? node.position.y
+                        : 180,
+                },
+                data: {
+                    name: config.name,
+                    name_count: index,
+                    parameters: cloneParameters(config.parameters),
+                    outputs: {},
+                    updated: false,
+                    success: false,
+                    errors: [],
+                    aiGenerated: true,
+                    aiLabel:
+                        node?.data?.label ||
+                        node?.data?.name ||
+                        config.name,
+                    aiDescription:
+                        node?.data?.description ||
+                        "",
+                },
+                initialWidth: 10,
+                initialHeight: 10,
+            };
+        });
+
+        const nodeMap = new Map(
+            normalizedNodes.map((node) => [node.id, node])
+        );
+
+        const findCompatibleHandles = (sourceId, targetId) => {
+            const sourceNode = nodeMap.get(String(sourceId));
+            const targetNode = nodeMap.get(String(targetId));
+
+            if (!sourceNode || !targetNode) {
+                return {
+                    sourceHandle: undefined,
+                    targetHandle: undefined,
+                };
+            }
+
+            const sourceConfig = NodeConfig[sourceNode.type];
+            const targetConfig = NodeConfig[targetNode.type];
+
+            const outputs = sourceConfig?.outputs || [];
+            const inputs = targetConfig?.inputs || [];
+
+            for (const output of outputs) {
+                for (const input of inputs) {
+                    const acceptedTypes = Array.isArray(input.type)
+                        ? input.type
+                        : [input.type];
+
+                    if (acceptedTypes.includes(output.type)) {
+                        return {
+                            sourceHandle: output.name,
+                            targetHandle: input.name,
+                        };
+                    }
+                }
+            }
+
+            return {
+                sourceHandle: outputs[0]?.name,
+                targetHandle: inputs[0]?.name,
+            };
+        };
+
+        const normalizedEdges = workflow.edges
+            .filter((edge) => {
+                return (
+                    edge?.source &&
+                    edge?.target &&
+                    nodeMap.has(String(edge.source)) &&
+                    nodeMap.has(String(edge.target))
+                );
+            })
+            .map((edge, index) => {
+                const handles = findCompatibleHandles(
+                    edge.source,
+                    edge.target
+                );
+
+                return {
+                    id: String(
+                        edge.id ||
+                        `ai-edge-${index}-${uuidv4()}`
+                    ),
+                    source: String(edge.source),
+                    target: String(edge.target),
+                    sourceHandle:
+                        edge.sourceHandle ||
+                        handles.sourceHandle,
+                    targetHandle:
+                        edge.targetHandle ||
+                        handles.targetHandle,
+                };
+            });
+
+        set({
+            nodes: normalizedNodes,
+            edges: normalizedEdges,
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 0.85,
+            },
+        });
+
+        setTimeout(() => {
+            if (get().id) {
+                get().savePlayground();
+            }
+        }, 0);
+    },
+
+    generateAIWorkflow: async (prompt) => {
+        const normalizedPrompt = String(prompt || "").trim();
+
+        if (!normalizedPrompt) {
+            throw new Error("Please describe the workflow you want to create.");
+        }
+
+        const apiBaseUrl =
+            import.meta.env.VITE_BACKEND_URL ||
+            "http://localhost:3838";
+
+        const response = await fetch(
+            `${apiBaseUrl}/api/llm/workflow/generate`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    prompt: normalizedPrompt,
+                }),
+            }
+        );
+
+        let result;
+
+        try {
+            result = await response.json();
+        } catch {
+            throw new Error(
+                "The backend returned an unreadable response."
+            );
+        }
+
+        if (!response.ok || !result?.success) {
+            throw new Error(
+                result?.message ||
+                result?.detail ||
+                "Workflow generation failed."
+            );
+        }
+
+        if (!result.workflow) {
+            throw new Error(
+                "The response does not contain a workflow."
+            );
+        }
+
+        get().loadAIWorkflow(result.workflow);
+
+        return result;
+    },
+
     countName: (name) => {
         return get().nodes.filter((node) => node.data.name === name).length;
     },

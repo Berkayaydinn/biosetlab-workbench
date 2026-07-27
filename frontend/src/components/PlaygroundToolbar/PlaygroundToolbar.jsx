@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { FloatButton, Dropdown, Badge, Space, Popover } from 'antd';
-import { NodeIndexOutlined } from '@ant-design/icons';
+import { FloatButton, Dropdown, Badge, Space, Popover, Modal, Input, Button, Typography, Alert } from 'antd';
+import { NodeIndexOutlined, RobotOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { usePlaygroundStore } from '../../store/playgroundStore';
 import { NodeConfig, toolbarNodeGroups, toolbarNodeGroupList, toolbarNodeGroupItemMap, GroupColorMap } from '../../config/NodeConfig';
 import ProjectCardContent from './ProjectCardContent';
+
+const { TextArea } = Input;
+const { Paragraph, Text } = Typography;
 
 const Toolbar = () => {
     // Open state for the toolbar
@@ -13,7 +16,46 @@ const Toolbar = () => {
     };
 
     // Click node menu item
-    const { addNode } = usePlaygroundStore();
+    const { addNode, generateAIWorkflow } = usePlaygroundStore();
+
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+    const [aiPrompt, setAIPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generationError, setGenerationError] = useState('');
+    const [explanation, setExplanation] = useState('');
+
+    const handleGenerateWorkflow = async () => {
+        const normalizedPrompt = aiPrompt.trim();
+
+        if (!normalizedPrompt) {
+            setGenerationError(
+                'Please describe the biomedical analysis workflow.'
+            );
+            return;
+        }
+
+        setIsGenerating(true);
+        setGenerationError('');
+        setExplanation('');
+
+        try {
+            const result = await generateAIWorkflow(normalizedPrompt);
+
+            setExplanation(
+                result?.explanation ||
+                'The workflow was generated and added to the canvas.'
+            );
+        } catch (error) {
+            setGenerationError(
+                error instanceof Error
+                    ? error.message
+                    : 'Workflow generation failed.'
+            );
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleClick = (type) => {
         addNode(type);
     };
@@ -31,6 +73,7 @@ const Toolbar = () => {
     }, {});
 
     return (
+        <>
         <FloatButton.Group
             shape='square'
             style={{
@@ -52,6 +95,18 @@ const Toolbar = () => {
                     title='Project'
                 />
             </Popover>
+
+            <FloatButton
+                icon={<RobotOutlined />}
+                title='Generate with AI'
+                type='primary'
+                onClick={() => {
+                    setGenerationError('');
+                    setExplanation('');
+                    setIsAIModalOpen(true);
+                }}
+            />
+
             {toolbarNodeGroups && toolbarNodeGroupList.map((type) => (
                 <Dropdown key={type} 
                     menu={{
@@ -77,6 +132,92 @@ const Toolbar = () => {
                 </Dropdown>
             ))}
         </FloatButton.Group>
+
+        <Modal
+            title={
+                <Space>
+                    <RobotOutlined />
+                    Generate Workflow with AI
+                </Space>
+            }
+            open={isAIModalOpen}
+            width={620}
+            onCancel={() => {
+                if (!isGenerating) {
+                    setIsAIModalOpen(false);
+                }
+            }}
+            footer={[
+                <Button
+                    key='cancel'
+                    disabled={isGenerating}
+                    onClick={() => setIsAIModalOpen(false)}
+                >
+                    Close
+                </Button>,
+                <Button
+                    key='generate'
+                    type='primary'
+                    icon={<ThunderboltOutlined />}
+                    loading={isGenerating}
+                    onClick={handleGenerateWorkflow}
+                >
+                    Generate Workflow
+                </Button>
+            ]}
+        >
+            <Paragraph type='secondary'>
+                Describe the biomedical analysis you want to perform.
+                The generated workflow will be added to the canvas.
+            </Paragraph>
+
+            <Text strong>Workflow description</Text>
+
+            <TextArea
+                value={aiPrompt}
+                placeholder='Example: Create a classification workflow with preprocessing and evaluation'
+                autoSize={{ minRows: 5, maxRows: 9 }}
+                maxLength={1000}
+                showCount
+                disabled={isGenerating}
+                style={{
+                    marginTop: 8,
+                    marginBottom: 16
+                }}
+                onChange={(event) => {
+                    setAIPrompt(event.target.value);
+                    setGenerationError('');
+                }}
+                onPressEnter={(event) => {
+                    if (
+                        (event.metaKey || event.ctrlKey) &&
+                        !isGenerating
+                    ) {
+                        handleGenerateWorkflow();
+                    }
+                }}
+            />
+
+            {generationError && (
+                <Alert
+                    type='error'
+                    showIcon
+                    message='Workflow could not be generated'
+                    description={generationError}
+                    style={{ marginBottom: 12 }}
+                />
+            )}
+
+            {explanation && (
+                <Alert
+                    type='success'
+                    showIcon
+                    message='Workflow generated'
+                    description={explanation}
+                />
+            )}
+        </Modal>
+        </>
     );
 }
 
