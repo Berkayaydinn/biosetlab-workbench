@@ -279,8 +279,10 @@ export const usePlaygroundStore = create((set, get) => ({
                 data: {
                     name: config.name,
                     name_count: index,
-                    parameters: cloneParameters(config.parameters),
-                    outputs: {},
+                    parameters: {
+                        ...cloneParameters(config.parameters),
+                        ...cloneParameters(node.parameters),
+                    },
                     updated: false,
                     success: false,
                     errors: [],
@@ -388,26 +390,43 @@ export const usePlaygroundStore = create((set, get) => ({
         }, 0);
     },
 
-    generateAIWorkflow: async (prompt) => {
+    generateAIWorkflow: async (prompt, datasetId, targetColumn) => {
         const normalizedPrompt = String(prompt || "").trim();
+        const normalizedDatasetId = String(datasetId || "").trim();
+        const normalizedTarget = String(targetColumn || "").trim();
 
         if (!normalizedPrompt) {
-            throw new Error("Please describe the workflow you want to create.");
+            throw new Error("Please describe the workflow.");
         }
 
-        const apiBaseUrl =
-            import.meta.env.VITE_BACKEND_URL ||
-            "http://localhost:3838";
+        if (!normalizedDatasetId) {
+            throw new Error("Please select a dataset.");
+        }
+
+        if (!normalizedTarget) {
+            throw new Error("Please select a target column.");
+        }
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            throw new Error("Please sign in to generate a workflow.");
+        }
+
+        const apiBaseUrl = "http://localhost:3838";
 
         const response = await fetch(
-            `${apiBaseUrl}/api/llm/workflow/generate`,
+            `${apiBaseUrl}/api/llm/workflow/generate-authorized`,
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     prompt: normalizedPrompt,
+                    datasetId: normalizedDatasetId,
+                    targetColumn: normalizedTarget,
                 }),
             }
         );
@@ -668,7 +687,6 @@ export const usePlaygroundStore = create((set, get) => ({
             name_count: node.data.name_count,
             type: node.type,
             parameters: node.data.parameters || {},
-            outputs: node.data.outputs,
             position: node.position,
           })),
           edges: edges.map((edge) => ({

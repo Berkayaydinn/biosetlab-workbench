@@ -97,9 +97,9 @@ async function anonymizeFile(filePath, methodsToAnonymize, savedFilePath) {
             jsonData = await readJSONFile(filePath);
         } else if (fileExt === '.csv') {
             jsonData = await readCSVFile(filePath);
-            console.log(jsonData);
+
         } else {
-            return res.status(500).json({ error: 'Unsupported file extension.' });
+            throw new Error('Unsupported file extension.');
         }
 
         const anonymizedData = anonymize(jsonData, methodsToAnonymize);
@@ -111,8 +111,8 @@ async function anonymizeFile(filePath, methodsToAnonymize, savedFilePath) {
 
         console.log('Anonymization completed for file:', filePath);
     } catch (error) {
-        console.error('Anonymization error for file:', filePath, error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Anonymization failed:', error.message);
+        throw error;
 
     }
 }

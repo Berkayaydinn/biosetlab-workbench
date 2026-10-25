@@ -1,30 +1,51 @@
-const jwt = require('jsonwebtoken');
+"use strict";
 
+const jwt = require("jsonwebtoken");
 
 class TokenManager {
   constructor() {
-    this.secretKey = "Selim12345";
-    this.expiresIn = '1y'
+    this.secretKey = process.env.JWT_SECRET;
+
+    if (!this.secretKey || this.secretKey.length < 48) {
+      throw new Error(
+        "JWT_SECRET must be configured and at least 48 characters."
+      );
+    }
+
+    this.expiresIn = "1y";
   }
 
   generateToken(userId) {
-    return jwt.sign({ userId },
-                     this.secretKey,
-                    {'expiresIn': this.expiresIn });
+    return jwt.sign(
+      { userId },
+      this.secretKey,
+      {
+        algorithm: "HS256",
+        expiresIn: this.expiresIn
+      }
+    );
   }
 
-  verifyToken(token) {
-    var token = token.split("Bearer ")[1];
+  verifyToken(authorization) {
+    if (typeof authorization !== "string") {
+      return null;
+    }
+
+    const match = /^Bearer ([^\s]+)$/.exec(authorization);
+
+    if (!match) {
+      return null;
+    }
+
     try {
-      if (typeof token !== 'undefined' && token !== null) {
-        const decoded = jwt.verify(token, this.secretKey);
-        return decoded.userId;
-      } else {
-          return null;
-      }
-      
-    } catch (error) {
-      console.log(error)
+      const decoded = jwt.verify(
+        match[1],
+        this.secretKey,
+        { algorithms: ["HS256"] }
+      );
+
+      return decoded.userId || null;
+    } catch {
       return null;
     }
   }

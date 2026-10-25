@@ -87,6 +87,10 @@ const createProject = async function (req, res, next) {
 }
 
 const createDatasetAndAdd2Project = async function (req, res, next) {
+    let filePath = null;
+    let anonymFilePath = null;
+    let originalFileCreated = false;
+
     try {
         const id = req.authanticatedUserId;
         const authUser = await User.findById(id, '-password');
@@ -98,12 +102,38 @@ const createDatasetAndAdd2Project = async function (req, res, next) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
+        const { canAccessProject } = require('../services/aiDatasetAccess');
+        if (!authUser || !canAccessProject(project, id)) {
+            return res.status(403).json({ error: 'Project access denied' });
+        }
+
         if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).json({ error: 'No files were uploaded' });
         }
 
         const file = req.files[0];
         const extension = getFileExtension(file.originalname);
+
+        if (!['csv', 'json'].includes(extension)) {
+            return res.status(400).json({ error: 'Unsupported file type' });
+        }
+
+        const columnNames = String(req.body.columnNames || '').split(',');
+        const columnActions = String(req.body.columnActions || '').split(',');
+        const allowed = new Set(['remove', 'mask', 'hash', 'empty', 'randomize', 'none']);
+
+        if (
+            columnNames.length !== columnActions.length ||
+            columnNames.some(name => !name.trim()) ||
+            columnActions.some(action => !allowed.has(action.trim()))
+        ) {
+            return res.status(400).json({ error: 'Invalid anonymization rules' });
+        }
+
+        const anonymizationMethods = {};
+        columnNames.forEach((name, i) => {
+            anonymizationMethods[name.trim()] = columnActions[i].trim();
+        });
 
         const dataset = new Dataset({
             name: req.body.name,
@@ -113,18 +143,13 @@ const createDatasetAndAdd2Project = async function (req, res, next) {
             uploadedBy: authUser._id
         });
 
-        const filePath = `./datasets/${projectId}-${dataset._id}.${extension}`;
-        const anonymFilePath = `./anonymdatasets/${projectId}-${dataset._id}.${extension}`;
+        filePath = `./datasets/${projectId}-${dataset._id}.${extension}`;
+        anonymFilePath = `./anonymdatasets/${projectId}-${dataset._id}.${extension}`;
 
 
-        fs.writeFile(filePath, file.buffer, (err) => {
-            if (err) {
-                console.error('Error writing file:', err);
-                throw err;
-            } else {
-                console.log('File saved successfully:', filePath);
-            }
-        });
+        await fs.promises.writeFile(filePath, file.buffer, { flag: 'wx' });
+        originalFileCreated = true;
+        await anonymizeFile(filePath, anonymizationMethods, anonymFilePath);
 
         dataset.url = filePath;
         dataset.anonym_url = anonymFilePath;
@@ -134,23 +159,31 @@ const createDatasetAndAdd2Project = async function (req, res, next) {
         await project.save();
         await dataset.save();
 
-        const columnNames = req.body.columnNames.split(',');
-        const columnActions = req.body.columnActions.split(',');
-
-        const anonymizationMethods = {};
-        columnNames.forEach((column, index) => {
-            anonymizationMethods[column] = columnActions[index];
-        });
-
-        anonymizeFile(filePath, anonymizationMethods, anonymFilePath);
-
         return res.status(200).json({
             "message": "Dataset added succesfully",
             dataset
         });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Dataset upload failed:', error.message);
+
+        if (originalFileCreated) {
+            for (const file of [anonymFilePath, filePath]) {
+                if (file) {
+                    try {
+                        await fs.promises.unlink(file);
+                    } catch (cleanupError) {
+                        if (cleanupError.code !== 'ENOENT') {
+                            console.error(
+                                'Dataset cleanup failed:',
+                                cleanupError.message
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        return res.status(500).json({ error: 'Dataset upload failed' });
     }
 };
 

@@ -422,7 +422,7 @@ class MLOps:
         
         if n_classes == 2:
             # Binary classification
-            fpr, tpr, _ = roc_curve(target_data, y_pred_proba[:, 1])
+            fpr, tpr, _ = roc_curve(target_data, y_pred_proba[:, 1], pos_label=classes[1])
             roc_auc = auc(fpr, tpr)
             
             return {

@@ -414,6 +414,11 @@ class CrossValidation:
             test_target = pd.Series(test_target)
 
         # Fit the model
+        from sklearn.base import clone
+
+        # Fresh estimator for each cross-validation fold.
+        # Any preprocessing Pipeline is fitted on training data only.
+        model = clone(model)
         model.fit(train_data, train_target)
 
         # Get predictions

@@ -26,6 +26,41 @@ class LogisticRegression(BaseNode):
         "model": ModelOutput(name="Model")
     }
 
+    @staticmethod
+    def create_preprocessing_pipeline(raw_model):
+        from sklearn.compose import ColumnTransformer, make_column_selector
+        from sklearn.impute import SimpleImputer
+        from sklearn.preprocessing import OneHotEncoder
+        from sklearn.pipeline import Pipeline
+        from sklearn.base import clone
+
+        categorical = Pipeline([
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", OneHotEncoder(handle_unknown="ignore"))
+        ])
+
+        numeric = Pipeline([
+            ("imputer", SimpleImputer(strategy="median"))
+        ])
+
+        preprocessor = ColumnTransformer([
+            (
+                "categorical",
+                categorical,
+                make_column_selector(dtype_include=["object", "category", "bool"])
+            ),
+            (
+                "numeric",
+                numeric,
+                make_column_selector(dtype_include="number")
+            )
+        ])
+
+        return Pipeline([
+            ("preprocessor", preprocessor),
+            ("classifier", clone(raw_model))
+        ])
+
     def build(self):
         """
         Build the file node.
@@ -57,6 +92,9 @@ class LogisticRegression(BaseNode):
                 C=C,
                 class_weight=class_weight
             )
+            if self.parameters.get("auto_preprocess", False):
+                raw_model = self.create_preprocessing_pipeline(raw_model)
+
             self.outputs["model"].build(raw_model=raw_model, model=None, 
                                 features=None, target=None)
             return

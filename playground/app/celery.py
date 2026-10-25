@@ -5,7 +5,7 @@ app = Celery('tasks', broker=cfg.RABBITMQ_URI)
 app.autodiscover_tasks(["app.tasks"])
 
 app.conf.update(
-    result_backend='rpc://',
+    result_backend=cfg.REDIS_URL,
     task_serializer='json',
     accept_content=['json'],
     result_serializer='json',

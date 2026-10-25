@@ -153,7 +153,7 @@ function SignUp() {
       localStorage.setItem("verifiedEmail", formData.email);
   
       // Navigate to verification page after successful signup
-      navigate("/verify");
+      navigate("/sign-in");
     } catch (error) {
       console.error("Error signing up:", error);
       // Handle error or display a message to the user

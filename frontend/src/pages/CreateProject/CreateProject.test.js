@@ -18,7 +18,7 @@ describe('CreateProject component', () => {
     );
 
     expect(getByText('Create New Project')).toBeInTheDocument();
-    expect(getByLabelText('Name:')).toBeInTheDocument();
+    expect(getByLabelText('Title:')).toBeInTheDocument();
     expect(getByLabelText('Summary:')).toBeInTheDocument();
     expect(getByText('Is Public')).toBeInTheDocument();
     expect(getByText('Tags:')).toBeInTheDocument();
@@ -31,7 +31,7 @@ describe('CreateProject component', () => {
         <CreateProject />
       </MemoryRouter>
     );
-    const nameInput = getByLabelText('Name:');
+    const nameInput = getByLabelText('Title:');
     
     fireEvent.change(nameInput, { target: { value: 'Test Project' } });
 

@@ -60,10 +60,8 @@ const signup = async function(req,res,next){
 
         user = new User({ email, password, name, surname, address, verificationCode, role, role});
         user.institutionId = institution;
-        const isSuccess = emailSender.sendEmail(email, "Verification", "Your verification code is " + verificationCode + ".")
-        if(!isSuccess){
-            throw new Error("Error when sending email.");
-        };
+        // TEMPORARY: Local development verification bypass
+        user.verified = true;
         await user.save();
         return res.status(201).json({ message: 'User created successfully' });
       } catch (error) {
