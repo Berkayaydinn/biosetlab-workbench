@@ -21,8 +21,45 @@ class GraphService:
         return self._graph
 
     def has_cycle(self):
-        # TODO: Implement cycle detection
-        return False
+        # Detect directed cycles using Kahn's topological sort.
+        graph = self.get_graph()
+
+        adjacency = {node.id: [] for node in graph.nodes}
+        in_degree = {node.id: 0 for node in graph.nodes}
+
+        for edge in graph.edges:
+            source = edge.source
+            target = edge.target
+
+            if source not in adjacency or target not in adjacency:
+                raise ValueError(
+                    f"Edge references an unknown node: {source} -> {target}"
+                )
+
+            adjacency[source].append(target)
+            in_degree[target] += 1
+
+        from collections import deque
+
+        queue = deque(
+            node_id
+            for node_id, degree in in_degree.items()
+            if degree == 0
+        )
+
+        visited_count = 0
+
+        while queue:
+            node_id = queue.popleft()
+            visited_count += 1
+
+            for neighbor in adjacency[node_id]:
+                in_degree[neighbor] -= 1
+
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+
+        return visited_count != len(adjacency)
     
     def add_node_hook(self, hook: Hook):
         self._node_hooks.append(hook)

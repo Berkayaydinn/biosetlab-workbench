@@ -1,3 +1,34 @@
+// Mock API requests triggered by the Welcome page.
+jest.mock('axios', () => {
+  const request = jest.fn(() => Promise.resolve({ data: {} }));
+
+  request.get = jest.fn((url) => {
+    if (url.includes('/api/project')) {
+      return Promise.resolve({
+        data: {
+          projects: [],
+          total: 0
+        }
+      });
+    }
+
+    if (url.includes('/api/tag/get')) {
+      return Promise.resolve({ data: [] });
+    }
+
+    return Promise.resolve({ data: {} });
+  });
+
+  request.post = jest.fn(() => Promise.resolve({ data: {} }));
+  request.put = jest.fn(() => Promise.resolve({ data: {} }));
+  request.delete = jest.fn(() => Promise.resolve({ data: {} }));
+
+  return {
+    __esModule: true,
+    default: request,
+  };
+});
+
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

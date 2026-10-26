@@ -1,5 +1,6 @@
 /** @type {import('jest').Config} */
 module.exports = {
+  testPathIgnorePatterns: ['/node_modules/', '/tests/', '/tests-examples/'],
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
   transform: {

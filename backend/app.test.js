@@ -64,7 +64,7 @@ const mockNext = jest.fn();
 
 describe('API user', () => {
     beforeAll(async () => {
-        await mongoose.connect('mongodb+srv://selimyurekligs:Selim12345@cluster0.bvqodo0.mongodb.net/Bitirme', {
+        await mongoose.connect('mongodb://127.0.0.1:27017/biosetlab_test', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
@@ -271,7 +271,7 @@ describe('API user', () => {
 
 describe('API Institution', () => {
     beforeAll(async () => {
-        await mongoose.connect('mongodb+srv://selimyurekligs:Selim12345@cluster0.bvqodo0.mongodb.net/Bitirme', {
+        await mongoose.connect('mongodb://127.0.0.1:27017/biosetlab_test', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
@@ -322,7 +322,7 @@ describe('API Institution', () => {
 
 describe('API Tag', () => {
     beforeAll(async () => {
-        await mongoose.connect('mongodb+srv://selimyurekligs:Selim12345@cluster0.bvqodo0.mongodb.net/Bitirme', {
+        await mongoose.connect('mongodb://127.0.0.1:27017/biosetlab_test', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
@@ -369,7 +369,7 @@ describe('API Tag', () => {
 
 describe('API proposal', () => {
     beforeAll(async () => {
-        await mongoose.connect('mongodb+srv://selimyurekligs:Selim12345@cluster0.bvqodo0.mongodb.net/Bitirme', {
+        await mongoose.connect('mongodb://127.0.0.1:27017/biosetlab_test', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
@@ -530,7 +530,7 @@ describe('API proposal', () => {
 
 describe('API project', () => {
     beforeAll(async () => {
-        await mongoose.connect('mongodb+srv://selimyurekligs:Selim12345@cluster0.bvqodo0.mongodb.net/Bitirme', {
+        await mongoose.connect('mongodb://127.0.0.1:27017/biosetlab_test', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });

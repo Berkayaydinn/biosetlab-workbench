@@ -58,3 +58,17 @@ export const mockReactFlow = () => {
 // --- EN ÖNEMLİ KISIM ---
 // Tanımlanan fonksiyonu çağırarak mock'ları test ortamı için etkinleştir.
 mockReactFlow();
+// Mock matchMedia for jsdom-based component tests.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});

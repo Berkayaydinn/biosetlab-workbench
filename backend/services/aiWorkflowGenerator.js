@@ -240,6 +240,48 @@ function validateCatalogReferences(workflow) {
     }
   }
 
+  // Reject directed cycles before returning an AI-generated workflow.
+  const adjacency = new Map(
+    workflow.nodes.map(node => [node.id, []])
+  );
+
+  const inDegree = new Map(
+    workflow.nodes.map(node => [node.id, 0])
+  );
+
+  for (const edge of workflow.edges) {
+    adjacency.get(edge.source).push(edge.target);
+    inDegree.set(
+      edge.target,
+      inDegree.get(edge.target) + 1
+    );
+  }
+
+  const queue = workflow.nodes
+    .filter(node => inDegree.get(node.id) === 0)
+    .map(node => node.id);
+
+  let visitedCount = 0;
+  let queueIndex = 0;
+
+  while (queueIndex < queue.length) {
+    const nodeId = queue[queueIndex++];
+    visitedCount += 1;
+
+    for (const neighbor of adjacency.get(nodeId)) {
+      const nextDegree = inDegree.get(neighbor) - 1;
+      inDegree.set(neighbor, nextDegree);
+
+      if (nextDegree === 0) {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  if (visitedCount !== workflow.nodes.length) {
+    throw new Error("Generated workflow contains a cycle.");
+  }
+
   return workflow;
 }
 

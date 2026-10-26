@@ -10,7 +10,7 @@ const request = supertest(app);
 
 describe('Institution Controller', () => {
     beforeAll(async () => {
-        await mongoose.connect('mongodb+srv://selimyurekligs:Selim12345@cluster0.bvqodo0.mongodb.net/Bitirme', {
+        await mongoose.connect('mongodb://127.0.0.1:27017/biosetlab_test', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });

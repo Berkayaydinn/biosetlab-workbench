@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const mongoose = require('mongoose');
 const express = require('express')
 var bodyParser = require('body-parser')
@@ -25,8 +26,10 @@ require('./db');
 app.use(cors());
 app.use("/api", index);
 
-app.listen(8000,()=>{
-  console.log("The application is started on port: ",8000);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(8000,()=>{
+    console.log("The application is started on port: ",8000);
+  });
+}
 
 module.exports = { express, app };

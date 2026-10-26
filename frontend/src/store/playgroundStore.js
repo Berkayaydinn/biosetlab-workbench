@@ -165,93 +165,10 @@ export const usePlaygroundStore = create((set, get) => ({
         }
 
         const inferNodeType = (node) => {
-            if (node.type && NodeConfig[node.type]) {
-                return node.type;
+            if (!node || typeof node.type !== "string" || !NodeConfig[node.type]) {
+                throw new Error(`Unsupported AI workflow node type: ${node?.type || "missing"}`);
             }
-
-            const label = String(
-                node?.data?.label ||
-                node?.data?.name ||
-                node?.label ||
-                ""
-            ).toLowerCase();
-
-            if (
-                label.includes("dataset") ||
-                label.includes("load data") ||
-                label.includes("upload")
-            ) {
-                return "node-data-file";
-            }
-
-            if (
-                label.includes("preprocess") ||
-                label.includes("clean") ||
-                label.includes("impute") ||
-                label.includes("missing")
-            ) {
-                return "node-transform-impute";
-            }
-
-            if (
-                label.includes("split") ||
-                label.includes("train test")
-            ) {
-                return "node-data-train-test-split";
-            }
-
-            if (
-                label.includes("classifier") ||
-                label.includes("classification") ||
-                label.includes("random forest") ||
-                label.includes("train model")
-            ) {
-                return "node-prediction-random-forest";
-            }
-
-            if (
-                label.includes("evaluate") ||
-                label.includes("evaluation") ||
-                label.includes("test and score")
-            ) {
-                return "node-evaluation-test-and-score";
-            }
-
-            if (label.includes("pca")) {
-                return "node-unsupervised-pca";
-            }
-
-            if (
-                label.includes("cluster") ||
-                label.includes("k-means") ||
-                label.includes("kmeans")
-            ) {
-                return "node-unsupervised-kmeans";
-            }
-
-            if (
-                label.includes("heatmap") ||
-                label.includes("volcano")
-            ) {
-                return "node-visualization-heatmap";
-            }
-
-            if (
-                label.includes("plot") ||
-                label.includes("chart") ||
-                label.includes("visual")
-            ) {
-                return "node-visualization-scatter-plot";
-            }
-
-            if (
-                label.includes("statistics") ||
-                label.includes("summary")
-            ) {
-                return "node-data-feature-statistics";
-            }
-
-            return "node-data-feature-statistics";
+            return node.type;
         };
 
         const cloneParameters = (parameters) => {
@@ -262,12 +179,24 @@ export const usePlaygroundStore = create((set, get) => ({
             }
         };
 
+        const nodeIds = new Set();
+        for (const node of workflow.nodes) {
+            if (!node || typeof node.id !== "string" || !node.id.trim()) {
+                throw new Error("AI workflow contains a node with an invalid ID.");
+            }
+            if (nodeIds.has(node.id)) {
+                throw new Error(`Duplicate AI workflow node ID: ${node.id}`);
+            }
+            nodeIds.add(node.id);
+            inferNodeType(node);
+        }
+
         const normalizedNodes = workflow.nodes.map((node, index) => {
             const type = inferNodeType(node);
             const config = NodeConfig[type];
 
             return {
-                id: String(node.id || `${type}-${uuidv4()}`),
+                id: node.id,
                 type,
                 position: {
                     x: Number.isFinite(node?.position?.x)
@@ -305,43 +234,27 @@ export const usePlaygroundStore = create((set, get) => ({
             normalizedNodes.map((node) => [node.id, node])
         );
 
-        const findCompatibleHandles = (sourceId, targetId) => {
-            const sourceNode = nodeMap.get(String(sourceId));
-            const targetNode = nodeMap.get(String(targetId));
-
-            if (!sourceNode || !targetNode) {
-                return {
-                    sourceHandle: undefined,
-                    targetHandle: undefined,
-                };
+        for (const edge of workflow.edges) {
+            if (!edge || !nodeMap.has(edge.source) || !nodeMap.has(edge.target)) {
+                throw new Error("AI workflow edge references an unknown node.");
             }
 
-            const sourceConfig = NodeConfig[sourceNode.type];
-            const targetConfig = NodeConfig[targetNode.type];
+            const sourceConfig = NodeConfig[nodeMap.get(edge.source).type];
+            const targetConfig = NodeConfig[nodeMap.get(edge.target).type];
+            const output = (sourceConfig.outputs || []).find(
+                handle => handle.name === edge.sourceHandle
+            );
+            const input = (targetConfig.inputs || []).find(
+                handle => handle.name === edge.targetHandle
+            );
+            const acceptedTypes = input
+                ? (Array.isArray(input.type) ? input.type : [input.type])
+                : [];
 
-            const outputs = sourceConfig?.outputs || [];
-            const inputs = targetConfig?.inputs || [];
-
-            for (const output of outputs) {
-                for (const input of inputs) {
-                    const acceptedTypes = Array.isArray(input.type)
-                        ? input.type
-                        : [input.type];
-
-                    if (acceptedTypes.includes(output.type)) {
-                        return {
-                            sourceHandle: output.name,
-                            targetHandle: input.name,
-                        };
-                    }
-                }
+            if (!output || !input || !acceptedTypes.includes(output.type)) {
+                throw new Error(`Invalid AI workflow connection: ${edge.source} -> ${edge.target}`);
             }
-
-            return {
-                sourceHandle: outputs[0]?.name,
-                targetHandle: inputs[0]?.name,
-            };
-        };
+        }
 
         const normalizedEdges = workflow.edges
             .filter((edge) => {
@@ -353,10 +266,10 @@ export const usePlaygroundStore = create((set, get) => ({
                 );
             })
             .map((edge, index) => {
-                const handles = findCompatibleHandles(
-                    edge.source,
-                    edge.target
-                );
+                const handles = {
+                    sourceHandle: edge.sourceHandle,
+                    targetHandle: edge.targetHandle,
+                };
 
                 return {
                     id: String(
