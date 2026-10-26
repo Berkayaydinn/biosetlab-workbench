@@ -3,6 +3,7 @@ import { exampleCrossValidation } from "./playgroundExamples/crossValidation";
 import { v4 as uuidv4 } from "uuid";
 import { applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
 import { NodeConfig } from "../config/NodeConfig";
+import dagre from "dagre";
 
 export const usePlaygroundStore = create((set, get) => ({
     // Project Data
@@ -373,8 +374,48 @@ export const usePlaygroundStore = create((set, get) => ({
                 };
             });
 
+        // Arrange AI-generated workflow nodes by graph dependencies.
+        // Preserve original IDs, parameters, and edge handles.
+        const layoutGraph = new dagre.graphlib.Graph();
+        layoutGraph.setGraph({
+            rankdir: "LR",
+            nodesep: 100,
+            ranksep: 160,
+            marginx: 40,
+            marginy: 40,
+        });
+        layoutGraph.setDefaultEdgeLabel(() => ({}));
+
+        const NODE_WIDTH = 340;
+        const NODE_HEIGHT = 180;
+
+        normalizedNodes.forEach((node) => {
+            layoutGraph.setNode(node.id, {
+                width: NODE_WIDTH,
+                height: NODE_HEIGHT,
+            });
+        });
+
+        normalizedEdges.forEach((edge) => {
+            layoutGraph.setEdge(edge.source, edge.target);
+        });
+
+        dagre.layout(layoutGraph);
+
+        const layoutedNodes = normalizedNodes.map((node) => {
+            const position = layoutGraph.node(node.id);
+
+            return {
+                ...node,
+                position: {
+                    x: position.x - NODE_WIDTH / 2,
+                    y: position.y - NODE_HEIGHT / 2,
+                },
+            };
+        });
+
         set({
-            nodes: normalizedNodes,
+            nodes: layoutedNodes,
             edges: normalizedEdges,
             viewport: {
                 x: 0,
